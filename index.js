@@ -14,19 +14,34 @@ ws.onmessage = async (event) => {
 
     const price = parseFloat(obj.a);
 
-    if (price < 19000 && !isOpened) {
+    if (price < 26500 && !isOpened) {
         console.log('Comprar');
+        newOrder('BTCUSDT', '0.001', 'BUY');
         isOpened = true;
     }
-    else if ( price > 21000 && isOpened) {
+    else if ( price > 27000 && isOpened) {
         console.log('Vender');
+        newOrder('BTCUSDT', '0.001', 'SELL');
         isOpened = false;
     }
 }
 
-function newOrder(Symbol, quantity, side){
-    const data = {Symbol, quantity, side};
+async function newOrder(symbol, quantity, side){
+    const data = {symbol, quantity, side};
     data.type = 'MARKET';
     data.timestamp = Date.now();
-    
+
+    const signature = crypto
+        .createHmac('sha256', process.env.SECRET_KEY)
+        .update(new URLSearchParams(data).toString())
+        .digest('hex');
+    data.signature = signature;
+
+    const result = await axios({
+        method:'POST',
+        url: process.env.API_URL + '/v3/order?' + new URLSearchParams(data),
+        headers: {'X-MBX-APIKEY': process.env.API_KEY}
+    })
+    console.log(result.data);
+
 }
